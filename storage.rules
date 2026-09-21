@@ -1,0 +1,29 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Profile picture: anyone signed in can see it, only its owner can replace it.
+    match /avatars/{file} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && file == request.auth.uid + '.jpg'
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Photos sent in a share's chat (e.g. "I got the car"). Create-only, deleted with the share.
+    match /shares/{id}/msgs/{file} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Full-size photo of a share. Create-only: nobody can overwrite it. Deleted by Cloud Functions.
+    match /shares/{id}/photo.jpg {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

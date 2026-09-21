@@ -1,0 +1,11 @@
+{
+  "_comment": "Placeholder. Download the real file: Firebase console → Project settings → Your apps → Android app → google-services.json. It is git-ignored.",
+  "project_info": { "project_number": "000000000000", "project_id": "your-project", "storage_bucket": "your-project.firebasestorage.app" },
+  "client": [
+    {
+      "client_info": { "mobilesdk_app_id": "1:000000000000:android:0000000000000000", "android_client_info": { "package_name": "com.example.myparking" } },
+      "api_key": [{ "current_key": "YOUR_API_KEY" }]
+    }
+  ],
+  "configuration_version": "1"
+}

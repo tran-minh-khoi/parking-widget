@@ -1,0 +1,128 @@
+{
+  "expo": {
+    "name": "Parking Widget",
+    "slug": "my-parking-widget",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myparking",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0A0A0A",
+    "locales": {
+      "vi": "./src/locales/ios-vi.json",
+      "en": "./src/locales/ios-en.json"
+    },
+    "ios": {
+      "icon": "./assets/AppIcon.icon",
+      "bundleIdentifier": "com.mktech.myparking",
+      "usesAppleSignIn": true,
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "appleTeamId": "3Q96WBQ4PG",
+      "associatedDomains": [
+        "applinks:my-parking.mktechvn.com",
+        "applinks:mk-my-parking.web.app"
+      ],
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": [
+          "comgooglemaps",
+          "waze"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.mktech.myparking",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundColor": "#0A0A0A"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0A0A0A",
+          "image": "./assets/images/splash-screen.png",
+          "resizeMode": "cover",
+          "ios": {
+            "enableFullScreenImage_legacy": true
+          },
+          "android": {
+            "image": "./assets/images/splash-icon.png",
+            "imageWidth": 200,
+            "resizeMode": "contain"
+          }
+        }
+      ],
+      "expo-localization",
+      "expo-apple-authentication",
+      "expo-notifications",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Camera is used to photograph where you parked."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Location is saved with your parking photo.",
+          "locationAlwaysAndWhenInUsePermission": "Location is used in the background to show how far you are from your parked car.",
+          "isIosBackgroundLocationEnabled": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Pick a photo from your library for your avatar."
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "My Parking compares your contacts with member phone numbers and emails to show which friends already use the app. Contacts are not stored."
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "widgets": [
+            {
+              "name": "ParkingWidget",
+              "displayName": "Parking Widget",
+              "description": "Where you parked your car",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "accessoryCircular",
+                  "accessoryRectangular",
+                  "accessoryInline"
+                ],
+                "contentMarginsDisabled": true
+              }
+            }
+          ]
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1e0c4086-7d74-472e-a969-ab944582ff4e"
+      }
+    },
+    "owner": "mktechvn",
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    }
+  }
+}

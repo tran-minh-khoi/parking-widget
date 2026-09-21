@@ -1,0 +1,8 @@
+{
+  "CFBundleDisplayName": "Parking Widget",
+  "NSCameraUsageDescription": "Camera dùng để chụp ảnh nơi bạn đỗ xe.",
+  "NSLocationWhenInUseUsageDescription": "Vị trí được lưu cùng ảnh đỗ xe của bạn.",
+  "NSPhotoLibraryUsageDescription": "Chọn ảnh từ thư viện để làm avatar.",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "Vị trí được dùng ngầm để hiện khoảng cách từ bạn tới xe đang đỗ.",
+  "NSContactsUsageDescription": "My Parking đối chiếu danh bạ với số điện thoại và email của thành viên để cho bạn biết bạn bè nào đã dùng ứng dụng. Danh bạ không được lưu lại."
+}

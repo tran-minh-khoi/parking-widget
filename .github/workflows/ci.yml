@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4 # the Firestore emulator needs Java 21+
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+      - run: npm ci --prefix functions
+
+      - name: Type check
+        run: npm run typecheck
+      - name: Translations (keys in every language, placeholders passed)
+        run: npm run check:i18n
+      - name: Cloud Functions parse
+        run: node --check functions/index.js
+      - name: Firestore rules tests
+        run: npm run test:rules
+      - name: Unfriend cleanup (emulators)
+        run: npm run test:unfriend
+      - name: Account deletion (emulators)
+        run: npm run test:delete

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Parking</title>
+<meta name="description" content="Remember where you parked, share it, and find your car.">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="icon" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="stylesheet" href="/site.css">
+<script src="/site.js"></script>
+</head>
+<body>
+<header class="site"><a class="brand" href="/"><img class="logo" src="/icon.png" alt="">My Parking</a></header>
+<main class="center" id="app"></main>
+<footer class="site"></footer>
+<script>
+// One page for three things: a shared parking spot (/s/<id>), a friend invitation (/u/<id>) and the landing page (/).
+const S = {
+  vi: {
+    tag: 'Nhớ chỗ đỗ xe, chia sẻ với bạn bè, tìm lại xe dễ dàng.',
+    invited: 'Bạn được mời kết bạn trên My Parking',
+    invitedSub: 'Mở ứng dụng để kết bạn. Chưa có ứng dụng? Tải bên dưới.',
+    shared: (n) => `${n} chia sẻ chỗ đỗ xe với bạn`,
+    until: (d) => `Xem được đến ${d}`,
+    navigate: 'Chỉ đường tới xe',
+    open: 'Mở trong ứng dụng để nhận',
+    openInvite: 'Mở trong ứng dụng',
+    one: 'Link này chỉ dành cho một người nhận. Ai mở trước và nhận trong ứng dụng sẽ giữ nó.',
+    gone: 'Link này đã được người khác nhận, đã hết hạn hoặc không tồn tại.',
+    loading: 'Đang tải…',
+  },
+  en: {
+    tag: 'Remember where you parked, share it with friends, find your car.',
+    invited: 'You were invited to be friends on My Parking',
+    invitedSub: "Open the app to add them as a friend. Don't have it? Get it below.",
+    shared: (n) => `${n} shared a parking spot with you`,
+    until: (d) => `Available until ${d}`,
+    navigate: 'Directions to the car',
+    open: 'Open in the app to accept',
+    openInvite: 'Open in the app',
+    one: 'This link is for one person. Whoever opens it first and accepts it in the app keeps it.',
+    gone: 'This link was already accepted by someone else, has expired, or does not exist.',
+    loading: 'Loading…',
+  },
+}[lang];
+
+const app = document.getElementById('app');
+const [, kind, rawId] = location.pathname.split('/');
+const id = encodeURIComponent(decodeURIComponent(rawId || ''));
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const btn = (href, icon, label, ghost) => `<a class="btn${ghost ? ' ghost' : ''}" href="${href}">${icon}${label}</a>`;
+
+if (kind === 'u' && id) {
+  app.innerHTML = `<h1>${S.invited}</h1><p class="muted">${S.invitedSub}</p><div class="actions">${btn(`myparking://u/${id}`, ICON.open, S.openInvite)}</div>${storeButtons()}`;
+} else if (kind === 's' && id) {
+  app.innerHTML = `<p class="muted">${S.loading}</p>`;
+  // Read straight from Firestore over REST. The rules only answer while the link is still open (one recipient).
+  fetch(`https://firestore.googleapis.com/v1/projects/${CONFIG.firebaseProject}/databases/(default)/documents/shares/${id}`)
+    .then((r) => (r.ok ? r.json() : Promise.reject()))
+    .then(({ fields: f }) => {
+      const lat = f.lat && f.lat.doubleValue, lng = f.lng && f.lng.doubleValue;
+      const place = f.placeTitle && f.placeTitle.stringValue, note = f.note && f.note.stringValue;
+      const until = new Date(f.expiresAt.timestampValue).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+      const maps = lat != null && lng != null ? btn(`https://maps.apple.com/?daddr=${lat},${lng}&dirflg=w${place ? `&q=${encodeURIComponent(place)}` : ''}`, ICON.navigate, S.navigate, true) : '';
+      app.innerHTML =
+        `<div class="card">${f.thumb && f.thumb.stringValue ? `<img alt="" src="data:image/jpeg;base64,${f.thumb.stringValue}">` : ''}` +
+        `${place ? `<div class="place">${esc(place)}</div>` : ''}${note ? `<span class="note">${esc(note)}</span>` : ''}` +
+        `<div class="meta">${esc(S.shared(f.ownerName.stringValue))} · ${esc(S.until(until))}</div></div>` +
+        `<div class="actions">${btn(`myparking://s/${id}`, ICON.open, S.open)}${maps}</div>` +
+        `<div class="notice">${S.one}</div>${storeButtons()}`;
+    })
+    .catch(() => { app.innerHTML = `<div class="notice error">${S.gone}</div>${storeButtons()}`; });
+} else {
+  app.innerHTML = `<h1>My Parking</h1><p class="muted">${S.tag}</p>${storeButtons()}`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function shareOf(id) { return get(/databases/$(database)/documents/shares/$(id)).data; }
+    function isMember(id) {
+      return signedIn() && (shareOf(id).ownerId == request.auth.uid
+        || shareOf(id).get('recipientId', null) == request.auth.uid);
+    }
+
+    // Trust: two people who accepted each other can see each other's current parking.
+    function pairId(other) {
+      return request.auth.uid < other ? request.auth.uid + '_' + other : other + '_' + request.auth.uid;
+    }
+    function trustedWith(other) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/trusts/$(pairId(other)))
+        && get(/databases/$(database)/documents/trusts/$(pairId(other))).data.status == 'accepted';
+    }
+
+    // Friends: accepted friendship is required before trusting each other or asking for a favour.
+    function friendsWith(other) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/friends/$(pairId(other)))
+        && get(/databases/$(database)/documents/friends/$(pairId(other))).data.status == 'accepted';
+    }
+
+    // One share = one conversation between the car's owner and one recipient.
+    // Anyone holding the (unguessable) id can read it until it expires.
+    match /shares/{id} {
+      // A link works for ONE person. While it is open (nobody accepted yet, inside its window) anyone holding the
+      // unguessable id can look at it; a friend-only invitation is visible to that friend only. Once someone
+      // accepted, only the owner and that recipient can read it (also afterwards: the conversation is history).
+      allow get: if (resource.data.status == 'open'
+            && resource.data.expiresAt > request.time
+            && (resource.data.get('invitee', null) == null
+                || (signedIn() && resource.data.invitee == request.auth.uid)))
+        || (signedIn() && (resource.data.ownerId == request.auth.uid
+            || resource.data.get('recipientId', null) == request.auth.uid));
+      // Lists ("my shares") only ever return docs where I'm the owner or the recipient.
+      allow list: if signedIn()
+        && (resource.data.ownerId == request.auth.uid
+            || resource.data.get('recipientId', null) == request.auth.uid
+            || resource.data.get('invitee', null) == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.status == 'open'
+        && !('recipientId' in request.resource.data)
+        // timeline / retention dates are stamped by Cloud Functions only
+        && !('timeline' in request.resource.data) && !('deleteAt' in request.resource.data) && !('endedAt' in request.resource.data)
+        && (!('invitee' in request.resource.data) || friendsWith(request.resource.data.invitee))
+        && request.resource.data.expiresAt > request.time
+        && request.resource.data.expiresAt <= request.time + duration.value(8, 'd') // up to 7 days = as long as a parking lasts
+        // a timed share lasts at most 12 hours (+ clock slack); beyond that it is "until the car is gone"
+        && (request.resource.data.get('untilGone', false) == true
+            || request.resource.data.expiresAt <= request.time + duration.value(12, 'h') + duration.value(10, 'm'))
+        && request.resource.data.thumb.size() < 200000
+        && request.resource.data.get('note', '').size() <= 100
+        && request.resource.data.get('inviteeName', '').size() <= 60
+        && request.resource.data.get('placeTitle', '').size() <= 200
+        && request.resource.data.get('placeAddress', '').size() <= 300;
+
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow update: if signedIn() && resource.data.expiresAt > request.time && (
+        // owner took the car back (closed) or took the link back (revoked)
+        (resource.data.ownerId == request.auth.uid
+          && resource.data.status in ['open', 'accepted']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          && request.resource.data.status in ['closed', 'revoked'])
+        // the link was really sent (share sheet completed)
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sent'])
+          && request.resource.data.sent == true)
+        // the owner changes how long the share lasts (also done automatically when the parking is renewed)
+        || (resource.data.ownerId == request.auth.uid
+          && resource.data.status in ['open', 'accepted']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['expiresAt', 'untilGone'])
+          && request.resource.data.expiresAt > request.time
+          && request.resource.data.expiresAt <= request.time + duration.value(8, 'd')
+          && (request.resource.data.get('untilGone', false) == true
+              || request.resource.data.expiresAt <= request.time + duration.value(12, 'h') + duration.value(10, 'm')))
+        // the owner edits the note: the other person sees it and is notified
+        || (resource.data.ownerId == request.auth.uid
+          && resource.data.status in ['open', 'accepted']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['note'])
+          && request.resource.data.get('note', '').size() <= 100)
+        // the owner nudges the other person: at most once a minute
+        || (resource.data.ownerId == request.auth.uid
+          && resource.data.status in ['open', 'accepted']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nudgedAt'])
+          && request.resource.data.nudgedAt == request.time
+          && request.time > resource.data.get('nudgedAt', timestamp.date(2000, 1, 1)) + duration.value(1, 'm'))
+        // first other signed-in person accepts
+        || (resource.data.status == 'open'
+          && resource.data.ownerId != request.auth.uid
+          && resource.data.get('recipientId', null) == null
+          && (resource.data.get('invitee', null) == null || resource.data.invitee == request.auth.uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recipientId', 'recipientName', 'status'])
+          && request.resource.data.recipientId == request.auth.uid
+          && request.resource.data.status == 'accepted')
+        // the friend who was asked declines
+        || (resource.data.status == 'open'
+          && resource.data.get('invitee', null) == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          && request.resource.data.status == 'declined')
+        // the person who agreed to pick the car up is busy and withdraws
+        || (resource.data.status == 'accepted'
+          && resource.data.get('recipientId', null) == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          && request.resource.data.status == 'declined')
+        // recipient picked the car up
+        || (resource.data.status == 'accepted'
+          && resource.data.get('recipientId', null) == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'pickedUpAt'])
+          && request.resource.data.status == 'pickedUp')
+      );
+
+      match /messages/{mid} {
+        allow read: if isMember(id);
+        allow create: if isMember(id)
+          && shareOf(id).status == 'accepted'
+          && shareOf(id).expiresAt > request.time
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 500
+          // a message is text, a photo, or both
+          && (request.resource.data.text.size() > 0 || request.resource.data.get('photoPath', null) is string);
+      }
+    }
+
+    // Public profile shown to people you share with (no email, no push token).
+    match /profiles/{uid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60
+        && request.resource.data.get('photoURL', '') is string && request.resource.data.get('photoURL', '').size() <= 600
+        && request.resource.data.get('gender', '').size() <= 20
+        && request.resource.data.get('about', '').size() <= 140;
+    }
+
+    // Trust request between two users; doc id = the two uids sorted, joined by '_'.
+    match /trusts/{pair} {
+      allow get, list: if signedIn() && request.auth.uid in resource.data.members;
+      allow create: if signedIn()
+        && request.resource.data.members.size() == 2
+        && request.resource.data.members[0] < request.resource.data.members[1]
+        && pair == request.resource.data.members[0] + '_' + request.resource.data.members[1]
+        && request.auth.uid in request.resource.data.members
+        && request.resource.data.requester == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && exists(/databases/$(database)/documents/friends/$(pair))
+        && get(/databases/$(database)/documents/friends/$(pair)).data.status == 'accepted';
+      // only the invited person can accept
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.members
+        && request.auth.uid != resource.data.requester
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status == 'accepted';
+      allow delete: if signedIn() && request.auth.uid in resource.data.members;
+    }
+
+    // Friend request; same shape as trusts (doc id = the two uids sorted, joined by '_').
+    match /friends/{pair} {
+      allow get, list: if signedIn() && request.auth.uid in resource.data.members;
+      allow create: if signedIn()
+        && request.resource.data.members.size() == 2
+        && request.resource.data.members[0] < request.resource.data.members[1]
+        && pair == request.resource.data.members[0] + '_' + request.resource.data.members[1]
+        && request.auth.uid in request.resource.data.members
+        && request.resource.data.requester == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.members
+        && request.auth.uid != resource.data.requester
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status == 'accepted';
+      allow delete: if signedIn() && request.auth.uid in resource.data.members;
+    }
+
+    // Phone number and email: visible to me and my friends only. Cloud Functions read it to find people by phone.
+    match /contacts/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || friendsWith(uid));
+      // I only write my phone number: my email is copied from my sign-in account by a Cloud Function (nobody can fake it)
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['phone'])
+        && request.resource.data.get('phone', '') is string
+        && request.resource.data.get('phone', '').size() <= 20;
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['phone'])
+        && request.resource.data.get('phone', '') is string
+        && request.resource.data.get('phone', '').size() <= 20;
+    }
+
+    // My private nicknames for people ("Mum", "Neighbour"): only I can read or write them.
+    match /users/{uid}/aliases/{other} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60;
+    }
+
+    // My current parking, published for people I trust (one doc per user, deleted when the car is picked up).
+    match /spots/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || trustedWith(uid));
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.thumb.size() < 200000
+        && request.resource.data.get('note', '').size() <= 100;
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    // In-app notification centre. Created only by Cloud Functions (Admin SDK bypasses rules).
+    match /users/{uid}/notifications/{nid} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+    }
+
+    // Push token + language, written by the user, read only by Cloud Functions (Admin SDK).
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+  }
+}

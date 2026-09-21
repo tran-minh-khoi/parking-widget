@@ -1,0 +1,8 @@
+{
+  "CFBundleDisplayName": "Parking Widget",
+  "NSCameraUsageDescription": "Camera is used to photograph where you parked.",
+  "NSLocationWhenInUseUsageDescription": "Location is saved with your parking photo.",
+  "NSPhotoLibraryUsageDescription": "Pick a photo from your library for your avatar.",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "Location is used in the background to show how far you are from your parked car.",
+  "NSContactsUsageDescription": "My Parking compares your contacts with member phone numbers and emails to show which friends already use the app. Contacts are not stored."
+}
