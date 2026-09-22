@@ -1,5 +1,20 @@
 import { HStack, Image, Link, Spacer, Text, VStack, ZStack } from '@expo/ui/swift-ui';
-import { aspectRatio, background, clipped, clipShape, containerBackground, cornerRadius, font, foregroundStyle, frame, minimumScaleFactor, padding, resizable, widgetURL } from '@expo/ui/swift-ui/modifiers';
+import {
+  aspectRatio,
+  background,
+  clipped,
+  clipShape,
+  containerBackground,
+  cornerRadius,
+  font,
+  foregroundStyle,
+  frame,
+  minimumScaleFactor,
+  multilineTextAlignment,
+  padding,
+  resizable,
+  widgetURL,
+} from '@expo/ui/swift-ui/modifiers';
 import { createWidget, type WidgetEnvironment } from 'expo-widgets';
 
 // Shows my parked car, else a spot someone shared with me that I accepted, else a "tap to photograph" prompt.
@@ -57,10 +72,20 @@ const ParkingWidget = (props: ParkingWidgetProps, env: WidgetEnvironment) => {
 
   if (!has) {
     return (
-      <VStack spacing={10} modifiers={[containerBackground(dark, 'widget')]}>
+      <VStack alignment="center" spacing={10} modifiers={[containerBackground(dark, 'widget')]}>
         <Spacer />
         <Image systemName="camera.fill" size={env.widgetFamily === 'systemMedium' ? 34 : 30} color={gold} />
-        <Text modifiers={[font({ weight: 'bold', size: 15 }), foregroundStyle('#FFFFFF'), padding({ horizontal: 12 })]}>{props.hint}</Text>
+        <Text
+          modifiers={[
+            font({ weight: 'bold', size: 15 }),
+            foregroundStyle('#FFFFFF'),
+            multilineTextAlignment('center'),
+            frame({ maxWidth: 9999, alignment: 'center' }),
+            padding({ horizontal: 12 }),
+          ]}
+        >
+          {props.hint}
+        </Text>
         <Spacer />
       </VStack>
     );
