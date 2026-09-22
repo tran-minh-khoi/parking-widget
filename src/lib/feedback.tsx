@@ -34,16 +34,24 @@ export const confirm = ({ title, message, action, cancelLabel, destructive = tru
 // ── busy overlay ────────────────────────────────────────────────────────────
 // Shows after a short delay (quick actions never flash it) and blocks taps until the work settles.
 let working = 0;
+let overlayVisible = false; // the Modal is actually on screen right now (after its 250ms delay)
 const busySubs = new Set<() => void>();
 const busyEmit = () => busySubs.forEach((f) => f());
+const dismissWaiters: (() => void)[] = [];
 
-export const trackBusy = <T,>(work: Promise<T>): Promise<T> => {
+export const trackBusy = async <T,>(work: Promise<T>): Promise<T> => {
   working++;
   busyEmit();
-  return work.finally(() => {
+  try {
+    return await work;
+  } finally {
     working--;
     busyEmit();
-  });
+    // The overlay was actually shown, so its close animation may still be running (iOS): wait for it to really be
+    // gone before the caller goes on to open anything else (an alert, another sheet, the native share sheet) — doing
+    // that while our modal is still dismissing is exactly what makes iOS silently drop the next one.
+    if (working === 0 && overlayVisible) await new Promise<void>((resolve) => dismissWaiters.push(resolve));
+  }
 };
 
 export function BusyOverlay() {
@@ -54,8 +62,17 @@ export function BusyOverlay() {
     const id = setTimeout(() => setShow(true), 250);
     return () => clearTimeout(id);
   }, [n]);
+  useEffect(() => {
+    overlayVisible = show;
+  }, [show]);
   return (
-    <Modal visible={show} transparent animationType="fade">
+    <Modal
+      visible={show}
+      transparent
+      animationType="fade"
+      onDismiss={() => dismissWaiters.splice(0).forEach((r) => r())}
+      onRequestClose={() => {}} // Android hardware back while busy: swallow it, don't pop the screen mid-action
+    >
       <View style={s.back}>
         <ActivityIndicator size="large" color={C.gold} />
       </View>

@@ -1,0 +1,28 @@
+# EAS Build ignore file
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.kotlin/
+.metro-health-check*
+
+# Let EAS run expo prebuild fresh on the cloud (CNG)
+/ios
+/android
+
+# Firebase local state & tests
+.firebase/
+*-debug.log
+firebase-debug.*.log
+.runtimeconfig.json
+
+# Logs, editor and OS files
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.tsbuildinfo
+.DS_Store
+.idea/
+.claude/

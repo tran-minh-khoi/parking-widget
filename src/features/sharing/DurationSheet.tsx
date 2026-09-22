@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PersonRow } from '@/components/Person';
 import { Sheet } from '@/components/Sheet';
@@ -36,20 +36,30 @@ export function DurationSheet({ visible, title, friends, onClose, onPick }: {
   const [idx, setIdx] = useState(3);
   const [picked, setPicked] = useState<ShareFor>();
   const hours = (h: number) => t('share.hours', { count: h });
+  // `onPick` often opens another modal (a confirm alert, the native share sheet): firing it the instant this sheet
+  // starts closing can race its dismiss animation on iOS, which then silently drops the second one. So it waits for
+  // the Modal's `onDismiss` (fired once the animation is actually done) instead of running right after `close()`.
+  const queued = useRef<{ duration: ShareFor; friend?: Friend }>(undefined);
   const close = () => {
     setPicked(undefined);
     setCustom(false);
     onClose();
   };
-  const choose = (d: ShareFor) => (friends ? setPicked(d) : (close(), onPick(d)));
-  const send = (friend?: Friend) => {
-    const d = picked!;
-    close();
-    onPick(d, friend);
+  const fire = () => {
+    const q = queued.current;
+    queued.current = undefined;
+    if (q) onPick(q.duration, q.friend);
   };
+  const queue = (duration: ShareFor, friend?: Friend) => {
+    queued.current = { duration, friend };
+    close();
+    if (Platform.OS !== 'ios') fire(); // Modal's onDismiss is iOS-only
+  };
+  const choose = (d: ShareFor) => (friends ? setPicked(d) : queue(d));
+  const send = (friend?: Friend) => queue(picked!, friend);
 
   return (
-    <Sheet visible={visible} onClose={close}>
+    <Sheet visible={visible} onClose={close} onDismiss={fire}>
           {picked === undefined ? (
             <>
               <Text style={st.title}>{title}</Text>

@@ -1,8 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { HeaderBack } from '@/components/HeaderButtons';
 import { LegalAgree, LegalRows } from '@/components/LegalLinks';
@@ -36,6 +36,12 @@ export default function Account() {
   const [deleting, setDeleting] = useState(false);
   const [apps, setApps] = useState<NavApp[]>(['apple']);
   useEffect(() => void installedApps().then(setApps), []);
+
+  // Signing in / out swaps this screen's content for a very differently sized one, in place, in the same
+  // ScrollView (no navigation happens). Scrolled mid-swap, iOS can leave the view showing a stale, blank region
+  // until it re-settles. Snapping back to the top when that boundary flips avoids it ever having to reconcile.
+  const scrollRef = useRef<ScrollView>(null);
+  useEffect(() => void scrollRef.current?.scrollTo({ y: 0, animated: false }), [!!user]);
 
   const { val, set, dirty, reset } = useDraft({
     name: user?.displayName ?? '',
@@ -83,7 +89,8 @@ export default function Account() {
       action: t('account.delete'),
       onConfirm: async () => {
         setDeleting(true);
-        await perform(deleteAccount(), t('account.deleted'), false); // no overlay: Sign in with Apple shows its own sheet
+        // the full-screen overlay (default) also blocks the header back button and Android's hardware back while this runs
+        await perform(deleteAccount(), t('account.deleted'));
         setDeleting(false);
       },
     });
@@ -111,7 +118,11 @@ export default function Account() {
   );
 
   return (
-    <Screen header={{ title: t('account.title'), left: <HeaderBack onPress={goBack} />, right: saveButton }} scroll>
+    <Screen
+      header={{ title: t('account.title'), left: <HeaderBack onPress={deleting ? () => {} : goBack} />, right: saveButton }}
+      scroll
+      scrollRef={scrollRef}
+    >
       {user ? (
         <View style={s.profile}>
           <Pressable onPress={newAvatar} disabled={uploading}>

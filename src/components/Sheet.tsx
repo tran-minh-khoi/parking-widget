@@ -5,9 +5,13 @@ import { C, PAD } from '@/lib/theme';
 
 // The bottom sheet every chooser uses (share duration, maps app, country code): dimmed backdrop, rounded top,
 // tap outside to close. `height` for a tall list, `keyboardAvoiding` when the sheet has a text field.
-export function Sheet({ visible, onClose, height, keyboardAvoiding, children }: {
+export function Sheet({ visible, onClose, onDismiss, height, keyboardAvoiding, children }: {
   visible: boolean;
   onClose: () => void;
+  // Fires once the close animation has actually finished (iOS only). Use it to open another modal, alert or native
+  // share sheet right after this one: doing that the moment `onClose` fires can race the animation and iOS silently
+  // drops the second presentation.
+  onDismiss?: () => void;
   height?: DimensionValue;
   keyboardAvoiding?: boolean;
   children: ReactNode;
@@ -20,7 +24,7 @@ export function Sheet({ visible, onClose, height, keyboardAvoiding, children }: 
     </Pressable>
   );
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} onDismiss={onDismiss}>
       {keyboardAvoiding ? (
         <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           {body}
