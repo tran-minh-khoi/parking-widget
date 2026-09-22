@@ -42,7 +42,7 @@ export function CircleButton({
   );
 }
 
-export function Avatar({ user, size = 52 }: { user: AppUser | null; size?: number }) {
+export function Avatar({ user, size = 52 }: { user: Pick<AppUser, 'displayName' | 'email' | 'photoURL'> | null; size?: number }) {
   const initial = (user?.displayName ?? user?.email ?? '?').trim().charAt(0).toUpperCase();
   return user?.photoURL ? (
     <Image source={user.photoURL} style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: C.card }} />

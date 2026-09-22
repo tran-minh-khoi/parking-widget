@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import { ObserveRoot, useObserve } from 'expo-observe';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
@@ -19,10 +20,11 @@ import { publishSpot, syncProfile } from '@/features/social/trust';
 import { BusyOverlay, DoneToast } from '@/lib/feedback';
 import { C } from '@/lib/theme';
 
-export default function RootLayout() {
+function RootLayoutImpl() {
   const router = useRouter();
   const user = useUser();
   const handled = useRef(new Set<string>());
+  const { markInteractive } = useObserve();
 
   // The photo widget also shows a spot shared with me that I accepted (until it's picked up / closed).
   const { received, owned } = useMyShares(user?.uid);
@@ -57,6 +59,7 @@ export default function RootLayout() {
         if (s) startTracking(); // background distance updates
       });
     loadHistory(); // purge history older than 24h
+    markInteractive();
   }, []);
 
   // Notification taps, also from a cold start: open the share, or run the reminder button.
@@ -85,3 +88,5 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+export default ObserveRoot.wrap(RootLayoutImpl);

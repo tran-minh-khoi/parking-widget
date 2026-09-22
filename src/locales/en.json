@@ -75,12 +75,22 @@
   "login": {
     "title": "Sign in",
     "subtitle": "Sign in to share your parking spot, get notifications and chat with friends.",
-    "google": "Continue with Google"
+    "google": "Continue with Google",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "createAccount": "Create account",
+    "noAccount": "Don't have an account? Sign up",
+    "haveAccount": "Already have an account? Sign in",
+    "forgot": "Forgot password?",
+    "resetSent": "Password reset email sent.",
+    "or": "or"
   },
   "account": {
     "title": "Account",
     "language": "Language",
     "signIn": "Sign in",
+    "signInUp": "Sign in / Sign up",
     "signOut": "Sign out",
     "changePhoto": "Tap the photo to change your avatar",
     "namePlaceholder": "Display name",
@@ -108,7 +118,9 @@
     "deleteBody": "This permanently deletes your profile, friends, shares, chats and photos from our servers, and your parkings and history from this phone. It cannot be undone.",
     "deleted": "Your account and its data were deleted.",
     "savedDone": "Saved.",
-    "avatarDone": "Profile photo updated."
+    "avatarDone": "Profile photo updated.",
+    "changePassword": "Change password",
+    "passwordResetSent": "Password reset email sent."
   },
   "history": {
     "title": "History",
@@ -322,7 +334,11 @@
     "signIn": "Please sign in and try again.",
     "network": "No internet connection. Check your network and try again.",
     "notFound": "This could not be found. It may have been deleted.",
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "emailInUse": "An account with that email already exists.",
+    "weakPassword": "Password must be at least 6 characters.",
+    "badEmail": "That doesn't look like a valid email address.",
+    "badCredentials": "Incorrect email or password."
   },
   "timeline": {
     "shared": "{{name}} shared the parking spot",
@@ -339,7 +355,7 @@
     "title": "Legal",
     "terms": "Terms of Use",
     "privacy": "Privacy Policy",
-    "agree": "By continuing you agree to the <terms>Terms of Use</terms> and the <privacy>Privacy Policy</privacy>."
+    "agree": "By continuing you agree to the <terms>Terms of Use</terms> and the <privacy>Privacy Policy</privacy>."
   },
   "profile": {
     "phone": "Phone",

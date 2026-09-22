@@ -7,12 +7,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { HeaderBack } from '@/components/HeaderButtons';
 import { Screen } from '@/components/Screen';
+import { SignInPrompt } from '@/components/SignInPrompt';
 import { useUser } from '@/features/account/auth';
 import { deleteNotices, markAllRead, markRead, useInbox, type Notice } from '@/features/inbox/inbox';
 import { confirm, perform } from '@/lib/feedback';
 import { C } from '@/lib/theme';
 import { formatWhen } from '@/lib/time';
-import { Button, CircleButton, ErrorNote, Skeleton, st, usePullRefresh, type IconName } from '@/components/ui';
+import { CircleButton, ErrorNote, Skeleton, st, usePullRefresh, type IconName } from '@/components/ui';
 
 const ICON: Record<Notice['type'], IconName> = {
   message: 'chatbubble-ellipses', share: 'car', trust: 'shield-checkmark', friend: 'person-add', spot: 'car-sport', system: 'information-circle',
@@ -71,11 +72,7 @@ export default function Notifications() {
       refreshControl={refreshControl}
     >
       {!user ? (
-        <View style={s.empty}>
-          <Ionicons name="notifications-outline" size={48} color={C.muted} />
-          <Text style={st.hint}>{t('notifications.signIn')}</Text>
-          <Button label={t('account.signIn')} onPress={() => router.push('/login')} />
-        </View>
+        <SignInPrompt icon="notifications-outline" text={t('notifications.signIn')} />
       ) : loading && notices.length === 0 ? (
         <Skeleton rows={4} />
       ) : error && notices.length === 0 ? (

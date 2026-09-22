@@ -16,6 +16,10 @@ export const errorText = (e: unknown) => {
   if (__DEV__) console.warn('[error]', code, msg);
   if (/permission-denied|unauthorized|forbidden/.test(code)) return i18n.t('errors.permission');
   if (/unauthenticated|requires-recent-login/.test(code)) return i18n.t('errors.signIn');
+  if (/email-already-in-use/.test(code)) return i18n.t('errors.emailInUse');
+  if (/weak-password/.test(code)) return i18n.t('errors.weakPassword');
+  if (/invalid-email|missing-password|missing-email/.test(code)) return i18n.t('errors.badEmail');
+  if (/wrong-password|user-not-found|invalid-credential/.test(code)) return i18n.t('errors.badCredentials');
   if (/unavailable|network|deadline|timeout/.test(code) || /network|offline|timed out/i.test(msg)) return i18n.t('errors.network');
   if (/not-found|object-not-found/.test(code)) return i18n.t('errors.notFound');
   return i18n.t('errors.generic');

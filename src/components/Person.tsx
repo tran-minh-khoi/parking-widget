@@ -10,7 +10,7 @@ import { C } from '@/lib/theme';
 // or when there is no profile (a name typed in a share, a contact match).
 export function UserAvatar({ uid, size = 46, name, photoURL }: { uid: string; size?: number; name?: string; photoURL?: string }) {
   const profile = useProfile(uid);
-  return <Avatar user={{ uid, displayName: name ?? profile?.name ?? '?', email: null, photoURL: profile?.photoURL || photoURL || null }} size={size} />;
+  return <Avatar user={{ displayName: name ?? profile?.name ?? '?', email: null, photoURL: profile?.photoURL || photoURL || null }} size={size} />;
 }
 
 // The list row used everywhere people appear (friends, trusted, shares, contacts, search results):

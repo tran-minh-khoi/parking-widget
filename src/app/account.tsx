@@ -8,9 +8,10 @@ import { HeaderBack } from '@/components/HeaderButtons';
 import { LegalAgree, LegalRows } from '@/components/LegalLinks';
 import { PhoneField } from '@/components/PhoneField';
 import { Screen } from '@/components/Screen';
+import { Sheet } from '@/components/Sheet';
 import { SignInButtons } from '@/components/SignInButtons';
 import { Avatar, Button, OptionList, st } from '@/components/ui';
-import { changeAvatar, logout, setDisplayName, useUser } from '@/features/account/auth';
+import { changeAvatar, logout, resetPassword, setDisplayName, useUser } from '@/features/account/auth';
 import { deleteAccount } from '@/features/account/delete';
 import { buildPhone, parsePhone } from '@/features/account/phone';
 import { getNavPref, installedApps, NAV_LABELS, setNavPref, type NavApp, type NavPref } from '@/features/directions/nav';
@@ -36,6 +37,8 @@ export default function Account() {
   const [deleting, setDeleting] = useState(false);
   const [apps, setApps] = useState<NavApp[]>(['apple']);
   useEffect(() => void installedApps().then(setApps), []);
+  const [langOpen, setLangOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
 
   // Signing in / out swaps this screen's content for a very differently sized one, in place, in the same
   // ScrollView (no navigation happens). Scrolled mid-swap, iOS can leave the view showing a stale, blank region
@@ -106,6 +109,15 @@ export default function Account() {
       setUploading(false);
     }
   };
+  const changePassword = async () => {
+    if (!user?.email) return;
+    try {
+      await resetPassword(user.email);
+      showDone(t('account.passwordResetSent'));
+    } catch (e) {
+      showError(e);
+    }
+  };
 
   const saveButton = (
     <Pressable onPress={saveAll} disabled={!dirty || saving} hitSlop={10} style={s.saveBtn}>
@@ -145,6 +157,7 @@ export default function Account() {
             <Ionicons name="mail-outline" size={16} color={C.muted} />
             <Text style={s.email}>{user.email ?? '—'}</Text>
           </View>
+          {user.hasPassword && <Text style={s.link} onPress={changePassword}>{t('account.changePassword')}</Text>}
 
           <View style={s.details}>
             <Text style={st.section}>{t('account.details')}</Text>
@@ -183,18 +196,18 @@ export default function Account() {
         <Ionicons name="chevron-forward" size={18} color={C.muted} />
       </Pressable>
 
-      <Text style={st.section}>{t('account.language')}</Text>
-      <OptionList options={(Object.keys(LANGS) as Lang[]).map((l) => ({ key: l, label: LANGS[l] }))} value={val.lang} onPick={(l) => set('lang', l)} />
+      <Pressable style={st.row} onPress={() => setLangOpen(true)}>
+        <Text style={[st.rowTitle, { flex: 1 }]}>{t('account.language')}</Text>
+        <Text style={s.value}>{LANGS[val.lang]}</Text>
+        <Ionicons name="chevron-forward" size={18} color={C.muted} />
+      </Pressable>
 
       {Platform.OS === 'ios' && (
-        <>
-          <Text style={st.section}>{t('account.navApp')}</Text>
-          <OptionList<NavPref>
-            options={(['ask', ...apps] as NavPref[]).map((p) => ({ key: p, label: p === 'ask' ? t('account.navAsk') : NAV_LABELS[p] }))}
-            value={val.nav}
-            onPick={(p) => set('nav', p)}
-          />
-        </>
+        <Pressable style={st.row} onPress={() => setNavOpen(true)}>
+          <Text style={[st.rowTitle, { flex: 1 }]}>{t('account.navApp')}</Text>
+          <Text style={s.value}>{val.nav === 'ask' ? t('account.navAsk') : NAV_LABELS[val.nav]}</Text>
+          <Ionicons name="chevron-forward" size={18} color={C.muted} />
+        </Pressable>
       )}
 
       <Text style={st.section}>{t('legal.title')}</Text>
@@ -202,6 +215,29 @@ export default function Account() {
 
       {user && <Button variant="dark" label={t('account.signOut')} icon="log-out-outline" onPress={confirmLogout} style={{ marginTop: 20 }} />}
       {user && <Button variant="danger" busy={deleting} label={t('account.delete')} icon="trash-outline" onPress={confirmDelete} />}
+
+      <Sheet visible={langOpen} onClose={() => setLangOpen(false)}>
+        <Text style={st.title}>{t('account.language')}</Text>
+        <OptionList
+          options={(Object.keys(LANGS) as Lang[]).map((l) => ({ key: l, label: LANGS[l] }))}
+          value={val.lang}
+          onPick={(l) => {
+            set('lang', l);
+            setLangOpen(false);
+          }}
+        />
+      </Sheet>
+      <Sheet visible={navOpen} onClose={() => setNavOpen(false)}>
+        <Text style={st.title}>{t('account.navApp')}</Text>
+        <OptionList<NavPref>
+          options={(['ask', ...apps] as NavPref[]).map((p) => ({ key: p, label: p === 'ask' ? t('account.navAsk') : NAV_LABELS[p] }))}
+          value={val.nav}
+          onPick={(p) => {
+            set('nav', p);
+            setNavOpen(false);
+          }}
+        />
+      </Sheet>
     </Screen>
   );
 }
@@ -223,4 +259,6 @@ const s = StyleSheet.create({
   about: { height: 84, paddingTop: 14, textAlignVertical: 'top' },
   emailRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   email: { color: C.muted, fontSize: 15 },
+  link: { color: C.gold, fontSize: 13, fontWeight: '600' },
+  value: { color: C.muted, fontSize: 15 },
 });

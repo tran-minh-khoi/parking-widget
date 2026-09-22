@@ -72,12 +72,22 @@
   "login": {
     "title": "Đăng nhập",
     "subtitle": "Đăng nhập để chia sẻ chỗ đỗ xe, nhận thông báo và nhắn tin với bạn bè.",
-    "google": "Tiếp tục với Google"
+    "google": "Tiếp tục với Google",
+    "email": "Email",
+    "password": "Mật khẩu",
+    "signIn": "Đăng nhập",
+    "createAccount": "Tạo tài khoản",
+    "noAccount": "Chưa có tài khoản? Đăng ký",
+    "haveAccount": "Đã có tài khoản? Đăng nhập",
+    "forgot": "Quên mật khẩu?",
+    "resetSent": "Đã gửi email đặt lại mật khẩu.",
+    "or": "hoặc"
   },
   "account": {
     "title": "Tài khoản",
     "language": "Ngôn ngữ",
     "signIn": "Đăng nhập",
+    "signInUp": "Đăng nhập / Đăng ký",
     "signOut": "Đăng xuất",
     "changePhoto": "Chạm vào ảnh để đổi avatar",
     "namePlaceholder": "Tên hiển thị",
@@ -105,7 +115,9 @@
     "deleteBody": "Hồ sơ, bạn bè, các lượt chia sẻ, trò chuyện và ảnh của bạn sẽ bị xoá vĩnh viễn khỏi máy chủ, cùng chỗ đỗ và lịch sử trên điện thoại này. Không thể hoàn tác.",
     "deleted": "Đã xoá tài khoản và dữ liệu của bạn.",
     "savedDone": "Đã lưu.",
-    "avatarDone": "Đã cập nhật ảnh đại diện."
+    "avatarDone": "Đã cập nhật ảnh đại diện.",
+    "changePassword": "Đổi mật khẩu",
+    "passwordResetSent": "Đã gửi email đặt lại mật khẩu."
   },
   "history": {
     "title": "Lịch sử",
@@ -315,7 +327,11 @@
     "signIn": "Vui lòng đăng nhập rồi thử lại.",
     "network": "Không có kết nối mạng. Kiểm tra mạng rồi thử lại.",
     "notFound": "Không tìm thấy nội dung này. Có thể nó đã bị xoá.",
-    "generic": "Có lỗi xảy ra. Vui lòng thử lại."
+    "generic": "Có lỗi xảy ra. Vui lòng thử lại.",
+    "emailInUse": "Email này đã được dùng để đăng ký tài khoản.",
+    "weakPassword": "Mật khẩu phải có ít nhất 6 ký tự.",
+    "badEmail": "Email không hợp lệ.",
+    "badCredentials": "Email hoặc mật khẩu không đúng."
   },
   "timeline": {
     "shared": "{{name}} đã chia sẻ chỗ đỗ xe",
@@ -332,7 +348,7 @@
     "title": "Pháp lý",
     "terms": "Điều khoản sử dụng",
     "privacy": "Chính sách quyền riêng tư",
-    "agree": "Bằng việc tiếp tục, bạn đồng ý với <terms>Điều khoản sử dụng</terms> và <privacy>Chính sách quyền riêng tư</privacy>."
+    "agree": "Bằng việc tiếp tục, bạn đồng ý với <terms>Điều khoản sử dụng</terms> và <privacy>Chính sách quyền riêng tư</privacy>."
   },
   "profile": {
     "phone": "Số điện thoại",

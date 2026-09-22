@@ -15,7 +15,7 @@ export function SignInPrompt({ icon, text }: { icon: IconName; text: string }) {
     <View style={s.box}>
       <Ionicons name={icon} size={48} color={C.muted} />
       <Text style={st.hint}>{text}</Text>
-      <Button label={t('account.signIn')} onPress={() => router.push('/login')} />
+      <Button label={t('account.signInUp')} onPress={() => router.push('/login')} />
     </View>
   );
 }

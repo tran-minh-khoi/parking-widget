@@ -111,7 +111,7 @@ export default function Profile() {
       />
         <View style={s.top}>
           <Pressable disabled={!profile?.photoURL} onPress={() => setViewing(profile?.photoURL)}>
-            <Avatar user={profile ? { uid, displayName: profile.name, email: null, photoURL: profile.photoURL || null } : null} size={110} />
+            <Avatar user={profile ? { displayName: profile.name, email: null, photoURL: profile.photoURL || null } : null} size={110} />
           </Pressable>
           <View style={s.nameRow}>
             <Text style={st.title}>{name}</Text>
